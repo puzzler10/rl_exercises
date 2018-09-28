@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from IPython.core.debugger import set_trace
 from math import log, e
-#%matplotlib auto
+%matplotlib auto
 
 #%%
 path = '/Users/tomroth/Dropbox/Reinforcement Learning/reinforcement_learning_exercises/ch5/racetrack/'
@@ -61,8 +61,8 @@ def hit_landmark(loc, finish=False):
     # this case - we're not up to finish territory yet
     # In this case the car has hit the side walls
     if finish:
-        if loc.col >= FINISH_DICT[loc.row]:        return True
         if loc.row > max(FINISH_DICT.keys()):      return False
+        if loc.col >= FINISH_DICT[loc.row]:        return True
     if not finish:
         min_col, max_col = min(BOUNDS_DICT[loc.row]), max(BOUNDS_DICT[loc.row])
         # one boundary case: it's om the left
@@ -210,21 +210,27 @@ actions = list(product([-1,0,1], repeat = 2))
 q,C,pi = initialise_dicts(track, actions)
 
 #### setup
-# Init b as equiprobable random policy
+# Init b as going up by one as default. got to be better than fucking around
+
 b = dict()
 for key in q.keys():
-    b[key] = 1/len(actions)
+    prob = 3/len(actions)
+    if actions[key[2]] in [(1,0), (1,1)] :
+        b[key] = prob
+    else:
+        b[key] = (1 - 2*prob) / (len(actions)-1)
 states = set([(o[0],o[1]) for o in b.keys()])
 
 gamma = 0.9
-for i in range(300):
-    print(i)
+for i in range(10000):
+    #print(i)
+    if i % 500 == 0: print(i)
     S,A,R = generate_episode(b, actions, lm)
     C,q,pi = update_policy(q, C, S, A, R, pi, b, gamma)
-    #if i < e:         epsilon = 1
-    #else:              epsilon = 1 / log(i,e)
-    #epsilon=1
-    #b = update_b(epsilon, b, q, states)
+    if i < e:         epsilon = 1
+    else:              epsilon = 1 / log(i,e)
+    epsilon=0.1
+    b = update_b(epsilon, b, q, states)
 
 v = dict()
 for s in states:
